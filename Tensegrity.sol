@@ -27,19 +27,17 @@ contract Tensegrity {
         require(price != 0, "price should not be equal to zero");
         require(courses[msg.sender].student == address(0) && courses[student].student == address(0), "teacher or using is in lesson");
         
-        Course memory course = Course({
+        courses[msg.sender] = Course({
             student: student,
             price: price,
             status: CourseStatus.STARTING,
             author: author
         });
-        
-        courses[msg.sender] = course;
     }
     
     function student_start_lesson(address teacher) public payable {
         require(courses[teacher].student == msg.sender, "This less is not yours");
-        require(courses[teacher].status == CourseStatus.IS_OFF, "Lesson is already going on");
+        require(courses[teacher].status == CourseStatus.STARTING, "Lesson is already going on");
         require(courses[teacher].price == msg.value, "Invalid amount");
         
         courses[teacher].status = CourseStatus.IS_ON;

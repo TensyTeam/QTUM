@@ -6,5 +6,7 @@ module.exports = {
     library: 'TEST',
     filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist')
+  },
+  module: {
   }
 };
