@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.18.0",
+    "big-integer": "^1.6.35",
     "ethjs-abi": "^0.2.1",
     "qtumjs-wallet": "^0.1.5"
   },

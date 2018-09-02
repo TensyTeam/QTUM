@@ -1,7 +1,7 @@
 const { networks } = require('qtumjs-wallet')
 const abi = require('ethjs-abi')
 
-const { parseAbi, getIndex, tohexaddress } = require('./utils')
+const { parseAbi, getIndex, tohexaddress, parseCourse } = require('./utils')
 const tensegrity = require('./bin/Tensegrity.json')
 
 const BASE_URL = 'http://40.67.212.77:3000'
@@ -54,7 +54,8 @@ async function courses(address) {
 
     const wallet = networks.testnet.fromWIF(FAKE_WALLET_WIF)
     const { executionResult } = await wallet.contractCall(CONTRACT_ADDRESS, encodedData)
-    console.log(executionResult)
+    console.log(parseCourse(executionResult.output))
+    //parseCourse()
   }
   catch (exc) {
     throw `something went wrong: ${exc}`
@@ -62,6 +63,6 @@ async function courses(address) {
 }
 
 const address = 'qbW63bgX99Cz8ckV3VKkF9vsFYrQVgu85u'
-teacher_ready_to_give_lesson('cQBNExX8R9cKuzbZG16NYcDKx4yeCLQ6XQgLSdUmVgUxErNJfQx9', { price: 100, student: address, author: address })
+//teacher_ready_to_give_lesson('cQBNExX8R9cKuzbZG16NYcDKx4yeCLQ6XQgLSdUmVgUxErNJfQx9', { price: 100, student: address, author: address })
 
-//courses()
+courses(address)

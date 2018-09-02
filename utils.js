@@ -1,4 +1,5 @@
 const bs58check = require('bs58check')
+const bigInt = require('big-integer')
 
 module.exports = {
   parseAbi: function(abi) {
@@ -45,5 +46,34 @@ module.exports = {
   
   fromhexaddress: function(hex) {
     return bs58check.encode(new Buffer(module.exports.hex2uint8arr('78' + hex)))
+  },
+
+  parseCourseStatus: function(hex) {
+    const type = parseInt(hex, 16)
+    return module.exports.COURSE_STATUS[type]
+  },
+
+  parseUint256: function(hex) {
+    return bigInt(hex, 16).toString()
+  },
+  
+  parseAddress: function(hex) {
+    return module.exports.fromhexaddress(hex.replace(/^0+/, ''))
+  },
+  
+  parseCourse: function(raw) {
+    return {
+      student: module.exports.parseAddress(raw.substr(0 * 64, 64)),
+      author: module.exports.parseAddress(raw.substr(1 * 64, 64)),
+      status: module.exports.parseCourseStatus(raw.substr(2 * 64, 64)),
+      price: module.exports.parseUint256(raw.substr(3 * 64, 64))
+    }
+  },
+
+  COURSE_STATUS: {
+    0: "IS_OFF",
+    1: "STARTING",
+    2: "IS_ON"
   }
 }
+
