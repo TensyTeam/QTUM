@@ -103,9 +103,3 @@ async function student_end_lesson(wif, isOk, teacher) {
   }
 }
 
-//teacher_ready_to_give_lesson('cQBNExX8R9cKuzbZG16NYcDKx4yeCLQ6XQgLSdUmVgUxErNJfQx9', { price: 100, student: address, author: address })
-
-//student_start_lesson(wif, address, 100).catch(err => console.log(err))
-
-//student_end_lesson(wif, true, address)
-//courses(address).then(res => console.log(res))
