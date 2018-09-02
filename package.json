@@ -1,0 +1,22 @@
+{
+  "name": "qtum_api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "./node_modules/.bin/webpack",
+    "run": "./node_modules/.bin/webpack && node ./dist/main.bundle.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "ethjs-abi": "^0.2.1",
+    "qtumjs-wallet": "^0.1.5"
+  },
+  "devDependencies": {
+    "script-loader": "^0.7.2",
+    "webpack": "^4.17.1",
+    "webpack-cli": "^3.1.0"
+  }
+}
