@@ -48,16 +48,15 @@ module.exports = {
     return bs58check.encode(new Buffer(module.exports.hex2uint8arr('78' + hex)))
   },
 
-  parseCourseStatus: function(hex) {
-    const type = parseInt(hex, 16)
-    return module.exports.COURSE_STATUS[type]
-  },
-
   parseUint256: function(hex) {
+    console.log(hex)
     return bigInt(hex, 16).toString()
   },
   
   parseAddress: function(hex) {
+    if (hex.replace(/^0+/, '') === '') {
+      return ''
+    }
     return module.exports.fromhexaddress(hex.replace(/^0+/, ''))
   },
   
@@ -65,15 +64,11 @@ module.exports = {
     return {
       student: module.exports.parseAddress(raw.substr(0 * 64, 64)),
       author: module.exports.parseAddress(raw.substr(1 * 64, 64)),
-      status: module.exports.parseCourseStatus(raw.substr(2 * 64, 64)),
-      price: module.exports.parseUint256(raw.substr(3 * 64, 64))
+      blocked: parseInt(raw.substr(2 * 64, 64), 16) === 1,
+      price: module.exports.parseUint256(raw.substr(3 * 64, 64)),
+      duration: module.exports.parseUint256(raw.substr(4 * 64, 64)),
+      start: module.exports.parseUint256(raw.substr(5 * 64, 64))
     }
-  },
-
-  COURSE_STATUS: {
-    0: "IS_OFF",
-    1: "STARTING",
-    2: "IS_ON"
   }
 }
 
