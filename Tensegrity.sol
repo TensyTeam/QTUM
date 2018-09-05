@@ -17,6 +17,10 @@ contract Tensegrity {
         bool teacher_is_right
     );
     
+    event LessonPrepared (
+        address indexed teacher
+    );
+    
     struct Course {
         address student;
         address author;
@@ -74,6 +78,8 @@ contract Tensegrity {
             duration: duration,
             start: 0
         });
+        
+        emit LessonPrepared(msg.sender);
     }
     
     function student_start_lesson(address teacher) public is_your_course(teacher) is_not_blocked(teacher) payable {
