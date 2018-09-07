@@ -19,6 +19,7 @@
   "devDependencies": {
     "bs58check": "^2.1.2",
     "script-loader": "^0.7.2",
+    "uglify-es-webpack-plugin": "^0.10.0",
     "webpack": "^4.17.1",
     "webpack-cli": "^3.1.0"
   }
