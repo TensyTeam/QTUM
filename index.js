@@ -1,13 +1,16 @@
 const { networks, generateMnemonic } = require('qtumjs-wallet')
 const abi = require('ethjs-abi')
+const axios = require('axios')
 
 const { parseAbi, getIndex, tohexaddress, parseCourse } = require('./utils')
 const tensegrity = require('./bin/Tensegrity.json')
 
+const QTUM_TESTNET = 'https://testnet.qtum.org'
 const BASE_URL = 'http://40.67.212.77:3000'
 const CONTRACT_ADDRESS = 'ed1b64311bf196365b93b0119ec76b49be9043b8'
 const FAKE_WALLET_WIF = 'cQHKNVeCRHUHzDnQcScKbZcKP96uKeGDcXq87kqNZsLWVWjWFbC4'
 const LOG_LESSON_STARTED = '1513afd76a75f5d693cff2d526284178e616f44aa02b3027456f9d240e2d6066'
+const TOPIC_LESSON_PREPARED = 'af83266df43f4cbe2812ff8e87dbb9f92768a2becf85ad2dfb2aa36f56dd2c9c'
 const config = {
   fee: 0.01,
   gasPrice: 50,
@@ -15,6 +18,37 @@ const config = {
 }
 
 module.exports = {
+  get_current_height: async () => {
+    const { data } = await axios.get(`${QTUM_TESTNET}/insight-api/sync`)
+    
+    if (data.status !== 'finished')
+      throw 'cant get current blockchain height.'
+
+    return data.blockChainHeight
+  },
+
+  waitforlog: async (from, topic, callback = (res) => { console.log('found!', res) }, 
+    timeout = () => { console.log('waitfor_LessonPrepared_log expired')}) => {
+    const currHeight = await module.exports.get_current_height()
+    const start = new Date().getTime();
+    
+    const interval = setInterval(async () => {
+      console.log(`REQUEST ${currHeight}`)
+      const { data } = await module.exports.searchlogs(currHeight, "latest", [CONTRACT_ADDRESS], [topic])
+      const filtered = data.data.filter(v => v.from.toLowerCase() === tohexaddress(from).toLowerCase())
+      
+      if (new Date().getTime() > start + 10 * 60 * 1000) {
+        timeout()
+        clearInterval(interval)
+      }
+
+      if (filtered.length !== 0) {
+        callback(filtered[0])
+        clearInterval(interval)
+      }
+    }, 10 * 1000)
+  },
+
   searchlogs: async (from, to, addresses, topics = []) => {
     const url = `${BASE_URL}/searchlogs/${from}/${to}/${addresses.join(',')}/${topics.join(',')}`
     return axios.get(url)
@@ -82,6 +116,24 @@ module.exports = {
       throw `something went wrong: ${exc}`
     }
   },
+
+  withdraw_expired: async (wif) => {
+    try {
+      const decoded = parseAbi(tensegrity.abi)
+      const index = getIndex(decoded, 'withdraw_expired')
+  
+      const encodedData = abi.encodeMethod(decoded[index].info, []).substr(2)
+      const { gasLimit } = config
+      
+      const wallet = networks.testnet.fromWIF(wif)
+      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData, { gasLimit })
+      const { txid } = await wallet.sendRawTx(signedTx)
+      return txid
+    }
+    catch (exc) {
+      throw `something went wrong: ${exc}`
+    }
+  },
   
   student_end_lesson: async (wif, { isOk, teacher }) => {
     if (!teacher || !isOk)
@@ -95,7 +147,6 @@ module.exports = {
       const { gasLimit } = config
       
       const wallet = networks.testnet.fromWIF(wif)
-      const estimation = await wallet.contractCall(CONTRACT_ADDRESS, encodedData, { gasLimit })
       const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData, { gasLimit })
       const { txid } = await wallet.sendRawTx(signedTx)
       return txid
@@ -122,4 +173,3 @@ module.exports = {
     return await wallet.getInfo()
   }
 }
-
