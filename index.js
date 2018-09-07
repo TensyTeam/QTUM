@@ -1,6 +1,7 @@
 const { networks, generateMnemonic } = require('qtumjs-wallet')
 const abi = require('ethjs-abi')
 const axios = require('axios')
+const { AES, enc } = require('crypto-js')
 
 const { parseAbi, getIndex, tohexaddress, parseCourse } = require('./utils')
 const tensegrity = require('./bin/Tensegrity.json')
@@ -171,5 +172,14 @@ module.exports = {
     const wallet = networks.testnet.fromWIF(FAKE_WALLET_WIF)
     wallet.address = address
     return await wallet.getInfo()
+  },
+
+  encrypt: (wif, password) => {
+    return AES.encrypt(wif, password).toString()
+  },
+
+  decrypt: (ecnrypted, password) => {
+    bytes = AES.decrypt(ecnrypted, password);
+    return bytes.toString(enc.Utf8);
   }
 }
