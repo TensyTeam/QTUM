@@ -114,7 +114,12 @@ module.exports = {
       wif: wallet.toWIF(),
       mnemonic
     }
+  },
+
+  get_info: async (address) => {
+    const wallet = networks.testnet.fromWIF(FAKE_WALLET_WIF)
+    wallet.address = address
+    return await wallet.getInfo()
   }
 }
 
-console.log(module.exports.generate_priv_key())

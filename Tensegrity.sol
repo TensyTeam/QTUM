@@ -7,7 +7,8 @@ contract Tensegrity {
     );
     
     event DisputeMade (
-        address indexed teacher
+        address indexed teacher,
+        uint index
     );
     
     event DisputeResolved (
@@ -36,16 +37,13 @@ contract Tensegrity {
         uint price;
     }
     
-    modifier has_expiried(address teacher) {
+    function is_expired(address teacher) private returns (bool) {
         uint diff = now - courses[teacher].start;
-        require(diff > courses[teacher].duration, "The course has not ended yet");
-        require(courses[teacher].blocked, "Course is not blocked");
-        _;
+        return diff > courses[teacher].duration;
     }
     
-    modifier is_not_blocked(address teacher) {
-        require(!courses[teacher].blocked, "Teacher is blocked");
-        _;
+    function is_blocked(address teacher) private returns (bool) {
+        return courses[teacher].blocked;
     }
     
     modifier is_moderator() {
@@ -53,8 +51,8 @@ contract Tensegrity {
         _;
     }
     
-    modifier is_your_course(address teacher) {
-        require(courses[teacher].student == msg.sender, "This course is not yours");
+    modifier is_student(address teacher) {
+        require(courses[teacher].student == msg.sender, "You are not student");
         _;
     }
     
@@ -64,11 +62,12 @@ contract Tensegrity {
     
     address public moderator;
     mapping (address => Course) public courses;
-    mapping (address => Dispute) public disputes;
+    mapping (address => Dispute[]) public disputes;
     
-    function teacher_ready_to_give_lesson(uint price, address student, address author, uint duration) public is_not_blocked(msg.sender) {
-        require(price != 0, "price should not be equal to zero");
-        require(duration <= 60 * 60 * 3, "Lesson is too big");
+    function teacher_ready_to_give_lesson(uint price, address student, address author, uint duration) public {
+        require(!is_blocked(msg.sender));
+        require(price != 0);
+        require(duration <= 60 * 60 * 3 && duration > 0);
         
         courses[msg.sender] = Course({
             student: student,
@@ -82,7 +81,8 @@ contract Tensegrity {
         emit LessonPrepared(msg.sender);
     }
     
-    function student_start_lesson(address teacher) public is_your_course(teacher) is_not_blocked(teacher) payable {
+    function student_start_lesson(address teacher) public is_student(teacher) payable {
+        require(!is_blocked(teacher), "Course is blocked");
         require(courses[teacher].price == msg.value, "Invalid amount");
         
         courses[teacher].blocked = true;
@@ -91,44 +91,47 @@ contract Tensegrity {
         emit LessonStarted(teacher, now + courses[teacher].duration);
     }
     
-    function student_end_lesson(bool is_ok, address teacher) public is_your_course(teacher) has_expiried(teacher) {
+    function student_end_lesson(bool is_ok, address teacher) public is_student(teacher) {
+        require(!is_expired(teacher) && is_blocked(teacher));
+        
         if (is_ok) {
             require(teacher.send(courses[teacher].price));
         }
         else {
-            disputes[teacher] = Dispute({
+            disputes[teacher].push(Dispute({
                 student: msg.sender,
                 author: courses[teacher].author,
                 price: courses[teacher].price
-            });
+            }));
             
-            emit DisputeMade(teacher);
+            emit DisputeMade(teacher, disputes[teacher].length);
         }
         
+        clear_course(teacher);
+    }
+    
+    function clear_course(address teacher) private {
         courses[teacher].blocked = false;
         courses[teacher].student = address(0);
     }
     
-    function resolve_dispute(address teacher) public is_moderator() {
-        uint diff = now - courses[teacher].start;
-        require(diff > 60 * 5, "Wait for student to give a grade");
-        require(courses[teacher].blocked, "Course is not blocked");
-        
-        require(teacher.send(disputes[teacher].price), "Unable to send");
-        emit DisputeResolved(teacher, courses[teacher].student, courses[teacher].price, true);
+    function withdraw_expired() public {
+        require(is_expired(msg.sender) && is_blocked(msg.sender));
+        msg.sender.send(courses[msg.sender].price);
+        clear_course(msg.sender);
     }
 
-    function resolve_dispute(address teacher, bool teacher_is_right) public is_moderator() {
-        require(disputes[teacher].student != 0, "There is no dispute related to this teacher");
+    function resolve_dispute(address teacher, bool teacher_is_right, uint i) public is_moderator() {
+        require(disputes[teacher][i].student != 0, "There is no dispute related to this teacher");
         
         if (teacher_is_right) {
-            require(teacher.send(disputes[teacher].price), "Unable to send");
+            require(teacher.send(disputes[teacher][i].price), "Unable to send");
         }
         else {
-            require(disputes[teacher].student.send(disputes[teacher].price), "Unable to send");   
+            require(disputes[teacher][i].student.send(disputes[teacher][i].price), "Unable to send");   
         }
         
-        disputes[teacher].student = address(0);
+        disputes[teacher][i].student = address(0);
         emit DisputeResolved(teacher, courses[teacher].student, courses[teacher].price, teacher_is_right);
     }
 }
