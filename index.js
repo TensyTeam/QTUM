@@ -181,5 +181,15 @@ module.exports = {
   decrypt: (ecnrypted, password) => {
     bytes = AES.decrypt(ecnrypted, password);
     return bytes.toString(enc.Utf8);
+  },
+
+  checkPrivKey: (priv, addr) => {
+    try {
+      const wallet = networks.testnet.fromWIF(priv)
+      return wallet.address === addr
+    }
+    catch (exc) {
+      return false
+    }
   }
 }
