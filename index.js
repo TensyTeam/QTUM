@@ -10,7 +10,7 @@ const QTUM_TESTNET = 'https://testnet.qtum.org'
 const BASE_URL = 'http://40.67.212.77:3000'
 const CONTRACT_ADDRESS = 'ed1b64311bf196365b93b0119ec76b49be9043b8'
 const FAKE_WALLET_WIF = 'cQHKNVeCRHUHzDnQcScKbZcKP96uKeGDcXq87kqNZsLWVWjWFbC4'
-const LOG_LESSON_STARTED = '1513afd76a75f5d693cff2d526284178e616f44aa02b3027456f9d240e2d6066'
+const TOPIC_LESSON_STARTED = '1513afd76a75f5d693cff2d526284178e616f44aa02b3027456f9d240e2d6066'
 const TOPIC_LESSON_PREPARED = 'af83266df43f4cbe2812ff8e87dbb9f92768a2becf85ad2dfb2aa36f56dd2c9c'
 const config = {
   fee: 0.01,
@@ -26,6 +26,14 @@ module.exports = {
       throw 'cant get current blockchain height.'
 
     return data.blockChainHeight
+  },
+
+  waitfor_LessonStarted_log: (teacher, onSuccess = v => console.log('found', v), onTimeout = () => console.log('timeout')) => {
+    return module.exports.waitforlog(teacher, TOPIC_LESSON_STARTED, onSuccess, onTimeout)
+  },
+
+  waitfor_LessonPrepared_log: (teacher, onSuccess = v => console.log('found', v), onTimeout = () => console.log('timeout')) => {
+    return module.exports.waitforlog(teacher, TOPIC_LESSON_PREPARED, onSuccess, onTimeout)
   },
 
   waitforlog: async (from, topic, callback = (res) => { console.log('found!', res) }, 
@@ -193,3 +201,31 @@ module.exports = {
     }
   }
 }
+
+//console.log(module.exports.checkPrivKey('cQBNExX8R9cKuzbZG16NYcDKx4yeCLQ6XQgLSdUmVg3xErNJfQx9', 'qbW63bgX99Cz8ckV3VKkF9vsFYrQVgu81u'))
+
+
+const address = 'qbW63bgX99Cz8ckV3VKkF9vsFYrQVgu85u'
+const wif = ''
+/*
+module.exports.teacher_ready_to_give_lesson(wif, { price: 100, student: address, author: address, duration: 60 })
+.then(txid => { 
+  console.log(txid)
+  module.exports.waitfor_LessonPrepared_log(address, (v) => {
+    console.log(v)
+    module.exports.student_start_lesson(wif, { teacher: address, price: 100 })
+    .then(txid => { 
+      console.log(txid)
+      module.exports.waitfor_LessonStarted_log(address)
+    })
+    .catch(err => console.log(err))
+  })
+})
+.catch(err => console.log(err))
+*/
+
+/*
+module.exports.waitforlog(address, TOPIC_LESSON_PREPARED)
+*/
+
+//console.log(module.exports.encrypt('hello', 'password').toString())
