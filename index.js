@@ -8,7 +8,7 @@ const tensegrity = require('./bin/Tensegrity.json')
 
 const QTUM_TESTNET = 'https://testnet.qtum.org'
 const BASE_URL = 'http://40.67.212.77:3000'
-const CONTRACT_ADDRESS = 'ed1b64311bf196365b93b0119ec76b49be9043b8'
+const CONTRACT_ADDRESS = 'af627f760792bb66fefb4aaaf4c5be6811fe546b'
 const FAKE_WALLET_WIF = 'cQHKNVeCRHUHzDnQcScKbZcKP96uKeGDcXq87kqNZsLWVWjWFbC4'
 const TOPIC_LESSON_STARTED = '1513afd76a75f5d693cff2d526284178e616f44aa02b3027456f9d240e2d6066'
 const TOPIC_LESSON_PREPARED = 'af83266df43f4cbe2812ff8e87dbb9f92768a2becf85ad2dfb2aa36f56dd2c9c'
@@ -46,7 +46,7 @@ module.exports = {
       const { data } = await module.exports.searchlogs(currHeight, "latest", [CONTRACT_ADDRESS], [topic])
       const filtered = data.data.filter(v => v.from.toLowerCase() === tohexaddress(from).toLowerCase())
       
-      if (new Date().getTime() > start + 10 * 60 * 1000) {
+      if (new Date().getTime() > start + 2 * 10 * 60 * 1000) {
         timeout()
         clearInterval(interval)
       }
@@ -76,7 +76,7 @@ module.exports = {
       const { gasLimit } = config
       
       const wallet = networks.testnet.fromWIF(wif)
-      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData, { gasLimit })
+      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData)
       const { txid } = await wallet.sendRawTx(signedTx)
       return txid
     }
@@ -117,7 +117,7 @@ module.exports = {
       const { gasLimit } = config
       
       const wallet = networks.testnet.fromWIF(wif)
-      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData, { gasLimit, amount: price })
+      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData, { amount: price })
       const { txid } = await wallet.sendRawTx(signedTx)
       return txid
     }
@@ -135,7 +135,7 @@ module.exports = {
       const { gasLimit } = config
       
       const wallet = networks.testnet.fromWIF(wif)
-      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData, { gasLimit })
+      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData)
       const { txid } = await wallet.sendRawTx(signedTx)
       return txid
     }
@@ -156,7 +156,7 @@ module.exports = {
       const { gasLimit } = config
       
       const wallet = networks.testnet.fromWIF(wif)
-      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData, { gasLimit })
+      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData)
       const { txid } = await wallet.sendRawTx(signedTx)
       return txid
     }
@@ -205,18 +205,28 @@ module.exports = {
 //console.log(module.exports.checkPrivKey('cQBNExX8R9cKuzbZG16NYcDKx4yeCLQ6XQgLSdUmVg3xErNJfQx9', 'qbW63bgX99Cz8ckV3VKkF9vsFYrQVgu81u'))
 
 
-const address = 'qbW63bgX99Cz8ckV3VKkF9vsFYrQVgu85u'
+const address = 'qRTujVfPSTo584P6MysCLWtRQcefwbkQpb'
 const wif = ''
+/*
+module.exports.courses(address).then(res => console.log(res))
+
+module.exports.withdraw_expired(wif).then(tx => console.log(tx))
+*/
 /*
 module.exports.teacher_ready_to_give_lesson(wif, { price: 100, student: address, author: address, duration: 60 })
 .then(txid => { 
   console.log(txid)
   module.exports.waitfor_LessonPrepared_log(address, (v) => {
     console.log(v)
+    module.exports.courses(address).then(res => console.log(res))
     module.exports.student_start_lesson(wif, { teacher: address, price: 100 })
     .then(txid => { 
       console.log(txid)
-      module.exports.waitfor_LessonStarted_log(address)
+      module.exports.waitfor_LessonStarted_log(address, (v) => {
+        module.exports.courses(address).then(res => console.log(res))
+
+        //module.exports.student_end_lesson(wif, {isOk: true, teacher: address}).then(t => console.log(t))
+      })
     })
     .catch(err => console.log(err))
   })
