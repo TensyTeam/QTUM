@@ -3,6 +3,7 @@ const abi = require('ethjs-abi')
 const axios = require('axios')
 const { AES, enc } = require('crypto-js')
 
+const { Wallet } = require('./wallet')
 const { parseAbi, getIndex, tohexaddress, parseCourse } = require('./utils')
 const tensegrity = require('./bin/Tensegrity.json')
 
@@ -199,14 +200,25 @@ module.exports = {
     catch (exc) {
       return false
     }
+  },
+
+  // 0.1
+  send: async (wif, to, amount) => {
+    const wallet = Wallet.restoreFromWif(wif)
+    const tx = await wallet.generateTx(to, amount, 0.01)
+    const txid = await Wallet.sendRawTx(tx)
+    return txid
   }
+
 }
 
 //console.log(module.exports.checkPrivKey('cQBNExX8R9cKuzbZG16NYcDKx4yeCLQ6XQgLSdUmVg3xErNJfQx9', 'qbW63bgX99Cz8ckV3VKkF9vsFYrQVgu81u'))
 
 
+
 const address = 'qRTujVfPSTo584P6MysCLWtRQcefwbkQpb'
 const wif = ''
+//module.exports.send(wif, 'qRTujVfPSTo584P6MysCLWtRQcefwbkQpb', 0.1234).then(txid => console.log(txid))
 /*
 module.exports.courses(address).then(res => console.log(res))
 
