@@ -4,7 +4,7 @@ const axios = require('axios')
 const { AES, enc } = require('crypto-js')
 
 const { Wallet } = require('./wallet')
-const { parseAbi, getIndex, tohexaddress, parseCourse } = require('./utils')
+const { parseAbi, getIndex, tohexaddress, parseCourse, fromhexaddress  } = require('./utils')
 const tensegrity = require('./bin/Tensegrity.json')
 
 const QTUM_TESTNET = 'https://testnet.qtum.org'
@@ -64,7 +64,7 @@ module.exports = {
     return axios.get(url)
   },
   
-  teacher_ready_to_give_lesson: async (wif, { price, student, author, duration }) => {
+  teacher_ready_to_give_lesson: async (wif, { price, student, author, duration, gasPrice }) => {
     if (!price || !student || !author)
       throw `teacher_ready_to_give_lesson invalid params: ${price}, ${student}, ${author}`
     
@@ -77,7 +77,7 @@ module.exports = {
       const { gasLimit } = config
       
       const wallet = networks.testnet.fromWIF(wif)
-      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData)
+      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData, { gasPrice: gasPrice || 50 })
       const { txid } = await wallet.sendRawTx(signedTx)
       return txid
     }
@@ -105,7 +105,7 @@ module.exports = {
     }
   },
   
-  student_start_lesson: async (wif, { teacher, price }) => {
+  student_start_lesson: async (wif, { teacher, price, gasPrice }) => {
     if (!teacher)
       throw `teacher_ready_to_give_lesson invalid params: ${teacher}`
     
@@ -118,7 +118,7 @@ module.exports = {
       const { gasLimit } = config
       
       const wallet = networks.testnet.fromWIF(wif)
-      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData, { amount: price })
+      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData, { amount: price, gasPrice: gasPrice || 50 })
       const { txid } = await wallet.sendRawTx(signedTx)
       return txid
     }
@@ -127,7 +127,7 @@ module.exports = {
     }
   },
 
-  withdraw_expired: async (wif) => {
+  withdraw_expired: async (wif, { gasPrice }) => {
     try {
       const decoded = parseAbi(tensegrity.abi)
       const index = getIndex(decoded, 'withdraw_expired')
@@ -136,7 +136,7 @@ module.exports = {
       const { gasLimit } = config
       
       const wallet = networks.testnet.fromWIF(wif)
-      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData)
+      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData, { gasPrice: gasPrice || 50 })
       const { txid } = await wallet.sendRawTx(signedTx)
       return txid
     }
@@ -145,7 +145,7 @@ module.exports = {
     }
   },
   
-  student_end_lesson: async (wif, { isOk, teacher }) => {
+  student_end_lesson: async (wif, { isOk, teacher, gasPrice }) => {
     if (!teacher || !isOk)
       throw `student_end_lesson invalid params: ${teacher}, ${isOk}`
     
@@ -157,7 +157,7 @@ module.exports = {
       const { gasLimit } = config
       
       const wallet = networks.testnet.fromWIF(wif)
-      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData)
+      const signedTx = await wallet.generateContractSendTx(CONTRACT_ADDRESS, encodedData, { gasPrice: gasPrice || 50 })
       const { txid } = await wallet.sendRawTx(signedTx)
       return txid
     }
@@ -217,14 +217,16 @@ module.exports = {
 
 
 const address = 'qRTujVfPSTo584P6MysCLWtRQcefwbkQpb'
-const wif = ''
+const wif = 'cUEC74oRKXBFypQeucSMwPDw6fXHxkBZxm4hWQcXeDVP6TCkrhvh'
+
+console.log(fromhexaddress('a9e29fbe8d567384a192471d249db075e393627c'))
 //module.exports.send(wif, 'qRTujVfPSTo584P6MysCLWtRQcefwbkQpb', 0.1234).then(txid => console.log(txid))
 /*
 module.exports.courses(address).then(res => console.log(res))
 
 module.exports.withdraw_expired(wif).then(tx => console.log(tx))
 */
-/*
+
 module.exports.teacher_ready_to_give_lesson(wif, { price: 100, student: address, author: address, duration: 60 })
 .then(txid => { 
   console.log(txid)
@@ -244,7 +246,7 @@ module.exports.teacher_ready_to_give_lesson(wif, { price: 100, student: address,
   })
 })
 .catch(err => console.log(err))
-*/
+
 
 /*
 module.exports.waitforlog(address, TOPIC_LESSON_PREPARED)
