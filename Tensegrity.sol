@@ -1,6 +1,9 @@
 pragma solidity ^0.4.21;
+import { SafeMath } from "./SafeMath.sol";
 
-contract Tensegrity {
+contract Tensegrity is SafeMath {
+    
+    
     event LessonStarted (
         address indexed teacher,
         uint indexed end_time
@@ -37,6 +40,19 @@ contract Tensegrity {
         uint price;
     }
     
+    //9 percents goes to the author
+    uint platformFactor = 10;
+    //1 percent gt to the author of the cource
+    uint authorFactor = 1;
+    
+    function substructDividents(uint value, address author) private returns (uint) {
+        uint toPLatform = div(mul(value, platformFactor), 100);
+        uint toAuthor = div(mul(value, authorFactor), 100);
+        
+        withdrawals[author] = add(withdrawals[author], toAuthor);
+        return sub(value, toAuthor + toPLatform);
+    }
+    
     function is_expired(address teacher) private returns (bool) {
         uint diff = now - courses[teacher].start;
         return diff > courses[teacher].duration;
@@ -63,10 +79,11 @@ contract Tensegrity {
     address public moderator;
     mapping (address => Course) public courses;
     mapping (address => Dispute[]) public disputes;
+    mapping (address => uint) public withdrawals;
     
     function teacher_ready_to_give_lesson(uint price, address student, address author, uint duration) public {
         require(!is_blocked(msg.sender));
-        require(price != 0);
+        require(price >= 100);
         require(duration <= 60 * 60 * 3 && duration > 0);
         
         courses[msg.sender] = Course({
@@ -95,7 +112,8 @@ contract Tensegrity {
         require(!is_expired(teacher) && is_blocked(teacher));
         
         if (is_ok) {
-            require(teacher.send(courses[teacher].price));
+            uint remainder = substructDividents(courses[teacher].price, courses[teacher].author);
+            require(teacher.send(remainder));
         }
         else {
             disputes[teacher].push(Dispute({
@@ -115,20 +133,30 @@ contract Tensegrity {
         courses[teacher].student = address(0);
     }
     
+    function withdraw() public {
+        withdrawals[msg.sender] = 0;
+        require(msg.sender.send(withdrawals[msg.sender]));
+    }
+    
     function withdraw_expired() public {
         require(is_expired(msg.sender) && is_blocked(msg.sender));
-        msg.sender.send(courses[msg.sender].price);
+        
+        uint res = substructDividents(courses[msg.sender].price, msg.sender);
+        msg.sender.send(res);
         clear_course(msg.sender);
     }
 
     function resolve_dispute(address teacher, bool teacher_is_right, uint i) public is_moderator() {
         require(disputes[teacher][i].student != 0, "There is no dispute related to this teacher");
+        uint remainder = 0;
         
         if (teacher_is_right) {
-            require(teacher.send(disputes[teacher][i].price), "Unable to send");
+            remainder = substructDividents(disputes[teacher][i].price, disputes[teacher][i].author);
+            require(teacher.send(remainder), "Unable to send");
         }
         else {
-            require(disputes[teacher][i].student.send(disputes[teacher][i].price), "Unable to send");   
+            remainder = substructDividents(disputes[teacher][i].price, disputes[teacher][i].author);
+            require(disputes[teacher][i].student.send(remainder), "Unable to send");   
         }
         
         disputes[teacher][i].student = address(0);
